@@ -17,7 +17,6 @@ export default function KelolaBukuTamuPage() {
 
           <KelolaBukuTamu />
         </div>
-        <Footer />
       </div>
     </div>
   );

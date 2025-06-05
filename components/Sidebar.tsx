@@ -61,6 +61,12 @@ export default function Sidebar() {
     { label: "Pengaturan", icon: <Settings size={18} />, path: "/pengaturan" },
   ];
 
+  const handleLogout = () => {
+    // Hapus token, session, dsb jika perlu
+    localStorage.removeItem("token"); // opsional
+    router.push("/login"); // arahkan ke halaman login
+  };
+
   return (
     <aside
       className={`transition-[width] duration-300 ease-in-out bg-gradient-to-b from-[#1A6EB5] to-[#073CA4] shadow-md rounded-2xl m-4 p-4 flex flex-col border border-white/20 ${
@@ -90,7 +96,7 @@ export default function Sidebar() {
 
         <button
           onClick={() => setIsMini(!isMini)}
-          className="text-white hover:bg-white/10 p-1 rounded-md"
+          className="text-white hover:bg-white/10 p-1 cursor-pointer rounded-md"
           title={isMini ? "Perbesar" : "Perkecil"}
         >
           {isMini ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -108,7 +114,7 @@ export default function Sidebar() {
               )}
               <button
                 onClick={() => router.push(path)}
-                className={`w-full flex items-center gap-3 px-3 py-2 pl-4 rounded-md text-sm font-medium transition-all duration-200
+                className={`w-full flex items-center cursor-pointer gap-3 px-3 py-2 pl-4 rounded-md text-sm font-medium transition-all duration-200
                 ${
                   isActive
                     ? "bg-white/20 text-white font-semibold"
@@ -151,7 +157,10 @@ export default function Sidebar() {
 
       {/* Tombol Logout */}
       <div className="mt-auto p-2">
-        <button className="w-full flex items-center justify-center gap-2 px-3 py-2 hover:bg-white/10 text-sm text-white rounded-xl font-medium transition duration-200">
+        <button
+          onClick={handleLogout}
+          className="w-full cursor-pointer flex items-center justify-center gap-2 px-3 py-2 hover:bg-white/10 text-sm text-white rounded-xl font-medium transition duration-200"
+        >
           <LogOut size={16} />
           {!isMini && "Logout"}
         </button>

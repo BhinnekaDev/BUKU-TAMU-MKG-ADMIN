@@ -86,7 +86,7 @@ export default function LaporanDenganFilter() {
   return (
     <div className="space-y-6">
       {/* Filter */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-4  gap-6">
         {/* Tipe Laporan */}
         <div className="space-y-2 min-w-0">
           <p className="text-sm font-semibold text-gray-600">Tipe Laporan</p>
@@ -95,7 +95,7 @@ export default function LaporanDenganFilter() {
               <button
                 key={type.value}
                 onClick={() => setSelectedType(type.value)}
-                className={`px-3 py-2 rounded-2xl text-sm font-medium transition-all duration-200 shadow-sm ${
+                className={`px-3 py-2 rounded-2xl text-sm cursor-pointer font-medium transition-all duration-200 shadow-sm ${
                   selectedType === type.value
                     ? "bg-blue-600 text-white ring-2 ring-blue-500"
                     : "bg-gray-100 text-gray-700 hover:bg-blue-100"
@@ -113,7 +113,7 @@ export default function LaporanDenganFilter() {
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700"
+            className="w-full px-4 py-3 cursor-pointer rounded-xl border border-gray-200 text-sm text-gray-700"
           >
             <option value="all">Semua Departemen</option>
             <option value="Teknik">Teknik</option>
@@ -130,7 +130,7 @@ export default function LaporanDenganFilter() {
           <select
             value={selectedPurpose}
             onChange={(e) => setSelectedPurpose(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700"
+            className="w-full px-4 py-3 cursor-pointer rounded-xl border border-gray-200 text-sm text-gray-700"
           >
             <option value="all">Semua Tujuan</option>
             <option value="Studi Lapangan">Studi Lapangan</option>
@@ -145,7 +145,7 @@ export default function LaporanDenganFilter() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700"
+            className="w-full px-4 py-3 cursor-pointer rounded-xl border border-gray-200 text-sm text-gray-700"
           >
             {statuses.map((status) => (
               <option key={status.value} value={status.value}>
@@ -157,7 +157,7 @@ export default function LaporanDenganFilter() {
       </div>
 
       {/* Tabel Buku Tamu */}
-      <LaporanBukuTamu guests={filteredGuests} />
+      <LaporanBukuTamu />
     </div>
   );
 }

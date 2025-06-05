@@ -72,7 +72,7 @@ export default function DashboardPage() {
               <button
                 key={btn.value}
                 onClick={() => setFilter(btn.value as FilterType)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition duration-200 ${
+                className={`px-4 py-1.5 cursor-pointer rounded-lg text-sm font-medium transition duration-200 ${
                   filter === btn.value
                     ? "bg-[#1A6EB5] text-white shadow"
                     : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -120,8 +120,6 @@ export default function DashboardPage() {
           <PengunjungInstitusi />
           <AksiCepat />
         </div>
-
-        <Footer />
       </div>
     </div>
   );

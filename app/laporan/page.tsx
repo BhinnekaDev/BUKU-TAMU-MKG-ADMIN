@@ -47,7 +47,7 @@ export default function Laporan() {
 
   return (
     <div className="h-screen">
-      <div className="flex">
+      <div className="flex h-screen">
         <Sidebar />
         <div className="flex-1 flex flex-col bg-[#f6f9fc] overflow-y-auto max-h-screen">
           <HeaderDashboard title="Laporan" />
@@ -55,7 +55,7 @@ export default function Laporan() {
           <div className="px-6 py-4 flex justify-end gap-3">
             <Button
               onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all duration-200 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-100"
+              className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all duration-200 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-100"
             >
               <IoMdPrint size={18} />
               Print Report
@@ -63,7 +63,7 @@ export default function Laporan() {
 
             <Button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all duration-200 shadow-sm bg-green-100 text-green-700 hover:bg-green-200"
+              className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-2xl text-sm font-medium transition-all duration-200 shadow-sm bg-green-100 text-green-700 hover:bg-green-200"
             >
               <CiExport size={18} />
               Export Data
@@ -76,7 +76,6 @@ export default function Laporan() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

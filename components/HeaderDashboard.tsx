@@ -1,6 +1,7 @@
+"use client";
 import React from "react";
+import { useRouter } from "next/navigation"; // import useRouter dari next/navigation
 import AdminProfile from "./ProfileAdmin";
-import Link from "next/link";
 import NotifikasiAdmin from "./NotifikasiAdmin";
 
 interface HeaderDashboardProps {
@@ -8,6 +9,8 @@ interface HeaderDashboardProps {
 }
 
 export default function HeaderDashboard({ title }: HeaderDashboardProps) {
+  const router = useRouter(); // buat router instance
+
   return (
     <header className="sticky top-0 z-40 bg-white border border-gray-200 rounded-2xl shadow-md mx-4 mt-4 mb-2 backdrop-blur-md">
       <div className="flex items-center justify-between h-20 px-6 py-3 animate-fade-in-up">
@@ -20,9 +23,16 @@ export default function HeaderDashboard({ title }: HeaderDashboardProps) {
         <div className="flex items-center gap-4">
           <NotifikasiAdmin />
 
-          <Link
-            href="/pengaturan"
+          <div
+            onClick={() => router.push("/pengaturan")} // navigasi programmatically
             className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                router.push("/pengaturan");
+              }
+            }}
           >
             <img
               src="/PotoProfile.png"
@@ -37,7 +47,7 @@ export default function HeaderDashboard({ title }: HeaderDashboardProps) {
                 Administrator
               </div>
             </div>
-          </Link>
+          </div>
         </div>
       </div>
     </header>

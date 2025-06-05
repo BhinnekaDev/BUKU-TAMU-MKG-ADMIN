@@ -72,7 +72,7 @@ export default function PengaturanAdmin() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={clsx(
-                "px-4 py-2 text-sm font-medium focus:outline-none",
+                "px-4 py-2 text-sm cursor-pointer font-medium focus:outline-none",
                 activeTab === tab
                   ? "border-b-2 border-blue-600 text-blue-600"
                   : "text-gray-600 hover:text-blue-600"

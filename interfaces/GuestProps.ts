@@ -5,13 +5,7 @@ export interface Guest {
   jobTitle: string;
   purpose: string;
   visitDate: string;
-  stationDestination: string; // Tambahkan
-  signature: string; // Tambahkan
   status: "Sedang Ditinjau" | "Diterima" | "Ditolak";
-}
-
-export interface TambahTamuProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAdd: (guest: Guest) => void;
+  stationDestination: string; // tujuan stasiun baru
+  signature: string; // base64 image tanda tangan
 }

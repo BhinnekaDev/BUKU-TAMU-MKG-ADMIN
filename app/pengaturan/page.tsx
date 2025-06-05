@@ -15,7 +15,6 @@ export default function PengaturanPage() {
         <div className="p-6">
           <Pengaturan />
         </div>
-        <Footer />
       </div>
     </div>
   );

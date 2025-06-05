@@ -1,19 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, ChangeEvent } from "react";
 import { Pencil, Trash2, Plus, Search, Download } from "lucide-react";
 import TambahTamu from "@/components/TambahTamu"; // sesuaikan path-nya
 import { IoMdEye } from "react-icons/io";
-
-interface Guest {
-  id: number;
-  name: string;
-  institution: string;
-  jobTitle: string;
-  purpose: string;
-  visitDate: string;
-  status: "Sedang Ditinjau" | "Diterima" | "Ditolak"; // update status
-}
+import { Guest } from "@/interfaces/GuestProps";
 
 function formatDateTime(dateStr: string) {
   const date = new Date(dateStr);
@@ -35,6 +26,7 @@ function exportToCSV(data: Guest[]) {
     "Jabatan",
     "Keperluan",
     "Waktu Kedatangan",
+    "Tujuan Stasiun",
   ];
   const rows = data.map((guest) => [
     guest.name,
@@ -42,6 +34,7 @@ function exportToCSV(data: Guest[]) {
     guest.jobTitle,
     guest.purpose,
     formatDateTime(guest.visitDate),
+    guest.stationDestination,
   ]);
 
   const csvContent =
@@ -65,7 +58,9 @@ const dummyGuests: Guest[] = [
     jobTitle: "Kepala Sub Bagian",
     purpose: "Rapat Koordinasi",
     visitDate: "2025-05-27T10:30",
-    status: "Sedang Ditinjau", // update status
+    status: "Sedang Ditinjau",
+    stationDestination: "Stasiun Gambir",
+    signature: "",
   },
   {
     id: 2,
@@ -74,7 +69,9 @@ const dummyGuests: Guest[] = [
     jobTitle: "Dosen",
     purpose: "Penelitian Iklim",
     visitDate: "2025-05-28T13:45",
-    status: "Diterima", // update status
+    status: "Diterima",
+    stationDestination: "Stasiun Senen",
+    signature: "",
   },
 ];
 
@@ -85,6 +82,7 @@ export default function KelolaBukuTamu() {
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
   const [selectedGuestForDetail, setSelectedGuestForDetail] =
     useState<Guest | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const institutions = useMemo(() => {
     const unique = new Set(guests.map((g) => g.institution));
@@ -115,10 +113,43 @@ export default function KelolaBukuTamu() {
     setEditingGuest(null);
   };
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
   const handleAddGuest = (guest: Guest) => {
     setGuests((prev) => [...prev, guest]);
+    setIsAddModalOpen(false);
+  };
+
+  // Fungsi untuk handle upload foto tanda tangan
+  const handleSignatureChange = (
+    e: ChangeEvent<HTMLInputElement>,
+    setGuest: React.Dispatch<React.SetStateAction<Guest | null>>
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setGuest(
+          (prev) => prev && { ...prev, signature: reader.result as string }
+        );
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentGuests = filteredGuests.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filteredGuests.length / itemsPerPage);
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   return (
@@ -128,21 +159,14 @@ export default function KelolaBukuTamu() {
           <h3 className="text-lg font-semibold text-gray-800">Daftar tamu</h3>
           <div className="flex gap-2">
             <button
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
+              className="flex items-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
               onClick={() => setIsAddModalOpen(true)} // buka modal tambah tamu
             >
               <Plus size={16} /> Tambah Tamu
             </button>
-            {isAddModalOpen && (
-              <TambahTamu
-                isOpen={isAddModalOpen}
-                onAdd={handleAddGuest}
-                onClose={() => setIsAddModalOpen(false)}
-              />
-            )}
 
             <button
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition"
+              className="flex items-center cursor-pointer gap-2 bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition"
               onClick={() => exportToCSV(filteredGuests)}
             >
               <Download size={16} /> Export CSV
@@ -150,6 +174,7 @@ export default function KelolaBukuTamu() {
           </div>
         </div>
 
+        {/* Filter Search & Institution */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="relative w-full md:w-1/2">
             <Search
@@ -168,7 +193,7 @@ export default function KelolaBukuTamu() {
           <select
             value={selectedInstitution}
             onChange={(e) => setSelectedInstitution(e.target.value)}
-            className="w-full md:w-1/2 border border-gray-300 rounded-lg px-4 py-2 text-sm"
+            className="w-full md:w-1/2 border border-gray-300 cursor-pointer rounded-lg px-4 py-2 text-sm"
           >
             {institutions.map((instansi) => (
               <option key={instansi} value={instansi}>
@@ -178,6 +203,7 @@ export default function KelolaBukuTamu() {
           </select>
         </div>
 
+        {/* Tabel tamu */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left">
             <thead>
@@ -187,6 +213,7 @@ export default function KelolaBukuTamu() {
                 <th className="px-4 py-3">Jabatan</th>
                 <th className="px-4 py-3">Keperluan</th>
                 <th className="px-4 py-3">Waktu Kedatangan</th>
+                <th className="px-4 py-3">Tujuan Stasiun</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-center">Aksi</th>
               </tr>
@@ -208,29 +235,30 @@ export default function KelolaBukuTamu() {
                     <td className="px-4 py-3">
                       {formatDateTime(guest.visitDate)}
                     </td>
+                    <td className="px-4 py-3">{guest.stationDestination}</td>
                     <td className="px-4 py-3">{guest.status}</td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => setSelectedGuestForDetail(guest)}
-                          className="text-indigo-600 hover:text-indigo-800"
+                          className="text-indigo-600 cursor-pointer hover:text-indigo-800"
                           title="Lihat Detail"
                         >
                           <IoMdEye size={16} />
                         </button>
                         <button
                           onClick={() => setEditingGuest(guest)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-blue-600 cursor-pointer hover:text-blue-800"
                           title="Edit"
                         >
-                          <Pencil size={14} />
+                          <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => handleDelete(guest.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 cursor-pointer hover:text-red-800"
                           title="Hapus"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -239,130 +267,97 @@ export default function KelolaBukuTamu() {
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
-                    className="text-center text-gray-500 py-4 italic"
+                    colSpan={8}
+                    className="text-center py-10 text-gray-400 text-sm"
                   >
-                    Tidak ada data tamu.
+                    Tidak ada data tamu
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          <div className="flex flex-col md:flex-row justify-between items-center mt-6 gap-3">
+            <p className="text-sm text-gray-600">
+              Menampilkan{" "}
+              <span className="font-medium">{indexOfFirstItem + 1}</span> -{" "}
+              <span className="font-medium">
+                {Math.min(indexOfLastItem, filteredGuests.length)}
+              </span>{" "}
+              dari <span className="font-medium">{filteredGuests.length}</span>{" "}
+              tamu
+            </p>
+
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="px-4 py-2 text-sm  bg-white text-blue-700 hover:bg-blue-50 hover:shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Sebelumnya
+              </button>
+
+              <div className="flex gap-2 items-center">
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const pageNumber = index + 1;
+                  const isActive = currentPage === pageNumber;
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`w-9 h-9 rounded-md text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow"
+                          : "bg-white text-blue-700 border border-gray-300 hover:bg-blue-50"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 text-sm bg-white text-blue-700 hover:bg-blue-50 hover:shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Berikutnya
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Modal tambah tamu */}
+      {isAddModalOpen && (
+        <TambahTamu
+          onClose={() => setIsAddModalOpen(false)}
+          onAdd={handleAddGuest}
+          isOpen
+        />
+      )}
+
       {/* Modal edit tamu */}
       {editingGuest && (
-        <div className="fixed inset-0  bg-opacity-40 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 z-50">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              Edit Tamu
-            </h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleGuestUpdate(editingGuest);
-              }}
-              className="space-y-3"
-            >
-              <input
-                type="text"
-                value={editingGuest.name}
-                onChange={(e) =>
-                  setEditingGuest({ ...editingGuest, name: e.target.value })
-                }
-                className="w-full border px-4 py-2 rounded-lg text-sm"
-                placeholder="Nama"
-                required
-              />
-              <input
-                type="text"
-                value={editingGuest.institution}
-                onChange={(e) =>
-                  setEditingGuest({
-                    ...editingGuest,
-                    institution: e.target.value,
-                  })
-                }
-                className="w-full border px-4 py-2 rounded-lg text-sm"
-                placeholder="Instansi"
-                required
-              />
-              <input
-                type="text"
-                value={editingGuest.jobTitle}
-                onChange={(e) =>
-                  setEditingGuest({ ...editingGuest, jobTitle: e.target.value })
-                }
-                className="w-full border px-4 py-2 rounded-lg text-sm"
-                placeholder="Jabatan"
-                required
-              />
-              <textarea
-                value={editingGuest.purpose}
-                onChange={(e) =>
-                  setEditingGuest({ ...editingGuest, purpose: e.target.value })
-                }
-                className="w-full border px-4 py-2 rounded-lg text-sm"
-                placeholder="Keperluan"
-                rows={3}
-                required
-              />
-              <input
-                type="datetime-local"
-                value={editingGuest.visitDate}
-                onChange={(e) =>
-                  setEditingGuest({
-                    ...editingGuest,
-                    visitDate: e.target.value,
-                  })
-                }
-                className="w-full border px-4 py-2 rounded-lg text-sm"
-                required
-              />
-              <select
-                value={editingGuest.status}
-                onChange={(e) =>
-                  setEditingGuest({
-                    ...editingGuest,
-                    status: e.target.value as Guest["status"],
-                  })
-                }
-                className="w-full border px-4 py-2 rounded-lg text-sm"
-                required
-              >
-                <option value="Sedang Ditinjau">Sedang Ditinjau</option>
-                <option value="Diterima">Diterima</option>
-                <option value="Ditolak">Ditolak</option>
-              </select>
+        <div className="fixed inset-0 backdrop-blur  bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+            <h3 className="text-lg font-semibold mb-4">Edit Data Tamu</h3>
 
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
-                  onClick={() => setEditingGuest(null)}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
-                >
-                  Simpan
-                </button>
-              </div>
-            </form>
+            <GuestForm
+              initialGuest={editingGuest}
+              onCancel={() => setEditingGuest(null)}
+              onSave={handleGuestUpdate}
+            />
           </div>
         </div>
       )}
 
       {/* Modal detail tamu */}
       {selectedGuestForDetail && (
-        <div className="fixed inset-0 bg-opacity-40 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 z-50">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">
-              Detail Tamu
-            </h3>
+        <div className="fixed inset-0 backdrop-blur bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <h3 className="text-lg font-semibold mb-4">Detail Data Tamu</h3>
             <div className="space-y-2 text-gray-700">
               <p>
                 <strong>Nama:</strong> {selectedGuestForDetail.name}
@@ -381,20 +376,201 @@ export default function KelolaBukuTamu() {
                 {formatDateTime(selectedGuestForDetail.visitDate)}
               </p>
               <p>
+                <strong>Tujuan Stasiun:</strong>{" "}
+                {selectedGuestForDetail.stationDestination}
+              </p>
+              <p>
                 <strong>Status:</strong> {selectedGuestForDetail.status}
               </p>
+              <p>
+                <strong>Foto Tanda Tangan:</strong>
+              </p>
+              {selectedGuestForDetail.signature ? (
+                <img
+                  src={selectedGuestForDetail.signature}
+                  alt="Tanda Tangan"
+                  className="border border-gray-300 rounded-md max-w-xs"
+                />
+              ) : (
+                <p className="text-sm italic text-gray-400">
+                  Belum ada tanda tangan
+                </p>
+              )}
             </div>
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={() => setSelectedGuestForDetail(null)}
-                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
-              >
-                Tutup
-              </button>
-            </div>
+
+            <button
+              onClick={() => setSelectedGuestForDetail(null)}
+              className="mt-6 bg-blue-600 cursor-pointer text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Tutup
+            </button>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+// Form tambah/edit tamu, digabung supaya reusable
+function GuestForm({
+  initialGuest,
+  onCancel,
+  onSave,
+}: {
+  initialGuest: Guest;
+  onCancel: () => void;
+  onSave: (guest: Guest) => void;
+}) {
+  const [guest, setGuest] = useState<Guest>(initialGuest);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setGuest({ ...guest, [e.target.name]: e.target.value });
+  };
+
+  const handleSignatureChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setGuest((prev) => ({ ...prev, signature: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(guest);
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 max-h-[80vh] overflow-auto"
+    >
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Nama
+        </label>
+        <input
+          type="text"
+          name="name"
+          value={guest.name}
+          onChange={handleChange}
+          required
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Instansi
+        </label>
+        <input
+          type="text"
+          name="institution"
+          value={guest.institution}
+          onChange={handleChange}
+          required
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Jabatan
+        </label>
+        <input
+          type="text"
+          name="jobTitle"
+          value={guest.jobTitle}
+          onChange={handleChange}
+          required
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Keperluan
+        </label>
+        <textarea
+          name="purpose"
+          value={guest.purpose}
+          onChange={handleChange}
+          required
+          rows={3}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm resize-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Waktu Kedatangan
+        </label>
+        <input
+          type="datetime-local"
+          name="visitDate"
+          value={guest.visitDate}
+          onChange={handleChange}
+          required
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      {/* Input baru: Tujuan Stasiun */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Tujuan Stasiun
+        </label>
+        <input
+          type="text"
+          name="stationDestination"
+          value={guest.stationDestination}
+          onChange={handleChange}
+          required
+          placeholder="Masukkan tujuan stasiun"
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      {/* Upload Foto Tanda Tangan */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Upload Foto Tanda Tangan
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleSignatureChange}
+          className="text-sm"
+        />
+        {guest.signature && (
+          <img
+            src={guest.signature}
+            alt="Preview Tanda Tangan"
+            className="mt-2 max-w-xs border border-gray-300 rounded"
+          />
+        )}
+      </div>
+
+      <div className="flex justify-end gap-2 mt-6">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+        >
+          Batal
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+        >
+          Simpan
+        </button>
+      </div>
+    </form>
   );
 }

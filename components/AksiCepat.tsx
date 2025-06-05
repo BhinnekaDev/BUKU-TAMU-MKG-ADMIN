@@ -5,24 +5,19 @@ import { Plus, Users, FileText, Settings } from "lucide-react";
 
 const actions = [
   {
-    label: "Tambah Tamu",
-    icon: <Plus size={16} />,
-    onClick: "/add-guest",
-  },
-  {
     label: "Kelola Tamu",
     icon: <Users size={16} />,
-    onClick: "/manage-guests",
+    onClick: "/kelolabukutamu",
   },
   {
     label: "Laporan",
     icon: <FileText size={16} />,
-    onClick: "/reports",
+    onClick: "/laporan",
   },
   {
     label: "Pengaturan",
     icon: <Settings size={16} />,
-    onClick: "/settings",
+    onClick: "/pengaturan",
   },
 ];
 
@@ -37,7 +32,7 @@ export default function AksiCepat() {
           <button
             key={idx}
             onClick={() => router.push(action.onClick)}
-            className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-blue-50 text-sm text-gray-800 font-medium transition-all shadow-sm border border-gray-200"
+            className="flex cursor-pointer items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-blue-50 text-sm text-gray-800 font-medium transition-all shadow-sm border border-gray-200"
           >
             <span className="p-2 bg-blue-100 text-blue-700 rounded-lg">
               {action.icon}
