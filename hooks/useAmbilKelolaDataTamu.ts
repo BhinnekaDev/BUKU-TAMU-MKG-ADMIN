@@ -2,24 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 
 export interface DataTamuProps {
   ID_Buku_Tamu: string;
-  ID_Pengunjung: string;
   ID_Stasiun: string;
   Tujuan: string;
-  Tanggal_Pengisian: string;
   Waktu_Kunjungan: string;
   Tanda_Tangan: string;
-  Pengunjung: {
-    Asal_Instansi: string;
-    ID_Pengunjung: string;
-    Asal_Pengunjung: string;
-    Email_Pengunjung: string;
-    Nama_Depan_Pengunjung: string;
-    No_Telepon_Pengunjung: string;
-    Nama_Belakang_Pengunjung: string;
-  };
-  Stasiun: {
-    Nama_Stasiun: string;
-  };
+  Asal_Instansi: string;
+  Asal_Pengunjung: string;
+  Email_Pengunjung: string;
+  Nama_Depan_Pengunjung: string;
+  No_Telepon_Pengunjung: string;
+  Nama_Belakang_Pengunjung: string;
+  Nama_Stasiun: string;
 }
 
 interface ApiResponse {

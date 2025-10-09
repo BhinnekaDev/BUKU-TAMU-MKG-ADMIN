@@ -1,24 +1,17 @@
 "use client";
 
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-  useCallback,
-} from "react";
-import { Download } from "lucide-react";
+import Pagination from "@/components/PaginationKelolaDataTamu";
+import { useAmbilDataTamu } from "@/hooks/useAmbilKelolaDataTamu";
+import { Buffer } from "buffer";
+import { format, parse } from "date-fns";
+import { id } from "date-fns/locale";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import { Buffer } from "buffer";
-import { useAmbilDataTamu } from "@/hooks/useAmbilKelolaDataTamu";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { parse } from "date-fns";
+import { Download } from "lucide-react";
 import Image from "next/image";
-import Pagination from "@/components/PaginationKelolaDataTamu";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export default function KelolaBukuTamu() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -210,19 +203,13 @@ export default function KelolaBukuTamu() {
       const keyword = searchTerm.toLowerCase();
       hasil = hasil.filter((tamu) => {
         const nama = `${tampilkanData(
-          tamu.Pengunjung?.Nama_Depan_Pengunjung
-        )} ${tampilkanData(
-          tamu.Pengunjung?.Nama_Belakang_Pengunjung
-        )}`.toLowerCase();
+          tamu?.Nama_Depan_Pengunjung
+        )} ${tampilkanData(tamu?.Nama_Belakang_Pengunjung)}`.toLowerCase();
 
-        const tujuan = tampilkanData(tamu.Tujuan).toLowerCase();
-        const stasiun = tampilkanData(tamu.Stasiun?.Nama_Stasiun).toLowerCase();
-        const email = tampilkanData(
-          tamu.Pengunjung?.Email_Pengunjung
-        ).toLowerCase();
-        const noTelp = tampilkanData(
-          tamu.Pengunjung?.No_Telepon_Pengunjung
-        ).toLowerCase();
+        const tujuan = tampilkanData(tamu?.Tujuan).toLowerCase();
+        const stasiun = tampilkanData(tamu?.Nama_Stasiun).toLowerCase();
+        const email = tampilkanData(tamu?.Email_Pengunjung).toLowerCase();
+        const noTelp = tampilkanData(tamu?.No_Telepon_Pengunjung).toLowerCase();
 
         return (
           nama.includes(keyword) ||
@@ -236,7 +223,7 @@ export default function KelolaBukuTamu() {
 
     // Apply purpose filter (client-side)
     if (filterTujuan) {
-      hasil = hasil.filter((tamu) => tamu.Tujuan === filterTujuan);
+      hasil = hasil.filter((tamu) => tamu?.Tujuan === filterTujuan);
     }
 
     return hasil;
@@ -269,7 +256,7 @@ export default function KelolaBukuTamu() {
   // const uniquePurposes = useMemo(() => {
   //   if (!daftarTamu) return [];
   //   const purposes = daftarTamu
-  //     .map((tamu) => tamu.Tujuan)
+  //     .map((tamu) => tamu?.Tujuan)
   //     .filter(
   //       (purpose, index, arr) =>
   //         purpose && purpose.trim() && arr.indexOf(purpose) === index
@@ -298,15 +285,15 @@ export default function KelolaBukuTamu() {
     filteredData.forEach((tamu, index) => {
       worksheet.addRow({
         no: index + 1,
-        nama: `${tampilkanData(
-          tamu.Pengunjung?.Nama_Depan_Pengunjung
-        )} ${tampilkanData(tamu.Pengunjung?.Nama_Belakang_Pengunjung)}`,
-        noTelepon: tampilkanData(tamu.Pengunjung?.No_Telepon_Pengunjung),
-        email: tampilkanData(tamu.Pengunjung?.Email_Pengunjung),
-        keperluan: tampilkanData(tamu.Tujuan),
-        asal: tampilkanData(tamu.Pengunjung?.Asal_Pengunjung),
-        tujuan: tampilkanData(tamu.Stasiun?.Nama_Stasiun),
-        tanggal: formatTanggal(tamu.Tanggal_Pengisian),
+        nama: `${tampilkanData(tamu?.Nama_Depan_Pengunjung)} ${tampilkanData(
+          tamu?.Nama_Belakang_Pengunjung
+        )}`,
+        noTelepon: tampilkanData(tamu?.No_Telepon_Pengunjung),
+        email: tampilkanData(tamu?.Email_Pengunjung),
+        keperluan: tampilkanData(tamu?.Tujuan),
+        asal: tampilkanData(tamu?.Asal_Pengunjung),
+        tujuan: tampilkanData(tamu?.Nama_Stasiun),
+        tanggal: formatTanggal(tamu?.Waktu_Kunjungan),
         tandaTangan: "", // Placeholder for signature image
       });
     });
@@ -333,9 +320,9 @@ export default function KelolaBukuTamu() {
     // Add signature images
     for (let index = 0; index < filteredData.length; index++) {
       const tamu = filteredData[index];
-      if (tamu.Tanda_Tangan) {
+      if (tamu?.Tanda_Tangan) {
         try {
-          const response = await fetch(tamu.Tanda_Tangan);
+          const response = await fetch(tamu?.Tanda_Tangan);
           const blob = await response.blob();
           const arrayBuffer = await blob.arrayBuffer();
           const base64 = Buffer.from(arrayBuffer).toString("base64");
@@ -367,7 +354,7 @@ export default function KelolaBukuTamu() {
       new Blob([fileBuffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `Daftar_Tamu.xlsx`
+      `Daftar_Tamu?.xlsx`
     );
   };
 
@@ -466,9 +453,11 @@ export default function KelolaBukuTamu() {
         filteredData.map(async (tamu, index) => {
           let tandaTanganBase64: string | null = null;
 
-          if (tamu.Tanda_Tangan) {
+          if (tamu?.Tanda_Tangan) {
             try {
-              const response = await fetch(tamu.Tanda_Tangan, { mode: "cors" });
+              const response = await fetch(tamu?.Tanda_Tangan, {
+                mode: "cors",
+              });
               const blob = await response.blob();
               const reader = new FileReader();
 
@@ -494,15 +483,15 @@ export default function KelolaBukuTamu() {
 
           return [
             index + 1,
-            `${tampilkanData(
-              tamu.Pengunjung?.Nama_Depan_Pengunjung
-            )} ${tampilkanData(tamu.Pengunjung?.Nama_Belakang_Pengunjung)}`,
-            tampilkanData(tamu.Pengunjung?.No_Telepon_Pengunjung),
-            tampilkanData(tamu.Pengunjung?.Email_Pengunjung),
-            tampilkanData(tamu.Tujuan),
-            tampilkanData(tamu.Pengunjung?.Asal_Pengunjung),
-            tampilkanData(tamu.Stasiun?.Nama_Stasiun),
-            formatTanggal(tamu.Waktu_Kunjungan),
+            `${tampilkanData(tamu?.Nama_Depan_Pengunjung)} ${tampilkanData(
+              tamu?.Nama_Belakang_Pengunjung
+            )}`,
+            tampilkanData(tamu?.No_Telepon_Pengunjung),
+            tampilkanData(tamu?.Email_Pengunjung),
+            tampilkanData(tamu?.Tujuan),
+            tampilkanData(tamu?.Asal_Pengunjung),
+            tampilkanData(tamu?.Nama_Stasiun),
+            formatTanggal(tamu?.Waktu_Kunjungan),
             "", // <== Tidak pakai __img${index}, cukup kosong
           ];
         })
@@ -610,7 +599,7 @@ export default function KelolaBukuTamu() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari tamu..."
+            placeholder="Cari tamu?..."
             className="w-[300px] h-10 px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -745,32 +734,26 @@ export default function KelolaBukuTamu() {
         <tbody>
           {currentItems.length > 0 ? (
             currentItems.map((tamu, index) => (
-              <tr key={tamu.ID_Buku_Tamu} className="border-b">
+              <tr key={tamu?.ID_Buku_Tamu} className="border-b">
                 <td className="p-2">{indexOfFirstItem + index + 1}</td>
                 <td className="p-2">
-                  {tampilkanData(tamu.Pengunjung?.Nama_Depan_Pengunjung)}{" "}
-                  {tampilkanData(tamu.Pengunjung?.Nama_Belakang_Pengunjung)}
+                  {tampilkanData(tamu?.Nama_Depan_Pengunjung)}{" "}
+                  {tampilkanData(tamu?.Nama_Belakang_Pengunjung)}
                 </td>
                 <td className="p-2">
-                  {tampilkanData(tamu.Pengunjung?.No_Telepon_Pengunjung)}
+                  {tampilkanData(tamu?.No_Telepon_Pengunjung)}
                 </td>
-                <td className="p-2">
-                  {tampilkanData(tamu.Pengunjung?.Email_Pengunjung)}
-                </td>
+                <td className="p-2">{tampilkanData(tamu?.Email_Pengunjung)}</td>
                 <td className="p-2 max-w-[150px] whitespace-normal break-words sm:max-w-[200px] md:max-w-[250px]">
-                  {tampilkanData(tamu.Tujuan)}
+                  {tampilkanData(tamu?.Tujuan)}
                 </td>
+                <td className="p-2">{tampilkanData(tamu?.Asal_Pengunjung)}</td>
+                <td className="p-2">{tampilkanData(tamu?.Nama_Stasiun)}</td>
+                <td className="p-2">{formatTanggal(tamu?.Waktu_Kunjungan)}</td>
                 <td className="p-2">
-                  {tampilkanData(tamu.Pengunjung?.Asal_Pengunjung)}
-                </td>
-                <td className="p-2">
-                  {tampilkanData(tamu.Stasiun?.Nama_Stasiun)}
-                </td>
-                <td className="p-2">{formatTanggal(tamu.Waktu_Kunjungan)}</td>
-                <td className="p-2">
-                  {tamu.Tanda_Tangan ? (
+                  {tamu?.Tanda_Tangan ? (
                     <Image
-                      src={tamu.Tanda_Tangan}
+                      src={tamu?.Tanda_Tangan}
                       alt="Tanda Tangan"
                       width={100}
                       height={40}

@@ -1,39 +1,48 @@
 "use client";
 
+import { Building2, FileText, Globe2, Landmark } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Building2, Landmark, FileText } from "lucide-react";
 
 interface InstitutionData {
   name: string;
-  type: "Dinas" | "Kantor" | "Universitas" | "Umum";
+  type: "BMKG" | "Pemerintah" | "Universitas" | "Umum";
   visits: number;
 }
 
 interface TamuData {
-  Pengunjung?: {
-    Asal_Pengunjung?: string;
-    [key: string]: unknown;
-  };
+  Asal_Pengunjung?: string;
   [key: string]: unknown;
 }
 
 function guessInstitutionType(name: string): InstitutionData["type"] {
-  const lower = name.toLowerCase();
+  const lower = (name || "").toLowerCase();
+
+  if (lower.includes("bmkg")) return "BMKG";
+  if (
+    lower.includes("pemerintah") ||
+    lower.includes("pemda") ||
+    lower.includes("pusat") ||
+    lower.includes("daerah") ||
+    lower.includes("dinas") ||
+    lower.includes("kantor")
+  )
+    return "Pemerintah";
   if (lower.includes("universitas") || lower.includes("univ"))
     return "Universitas";
-  if (lower.includes("dinas")) return "Dinas";
-  if (lower.includes("kantor")) return "Kantor";
   return "Umum";
 }
 
+// Ikon berdasarkan kategori
 function getIcon(type: InstitutionData["type"]) {
   switch (type) {
+    case "BMKG":
+      return <Globe2 className="text-sky-600" size={18} />;
+    case "Pemerintah":
+      return <Building2 className="text-green-600" size={18} />;
     case "Universitas":
-      return <Landmark className="text-blue-500" size={18} />;
-    case "Kantor":
-      return <Building2 className="text-green-500" size={18} />;
-    case "Dinas":
-      return <FileText className="text-purple-500" size={18} />;
+      return <Landmark className="text-blue-600" size={18} />;
+    case "Umum":
+      return <FileText className="text-gray-600" size={18} />;
     default:
       return null;
   }
@@ -47,21 +56,22 @@ export default function PengunjungIntitusi({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Proses data untuk menghitung total per kategori
   const institutionMap: Record<string, InstitutionData> = {};
 
   if (Array.isArray(data)) {
     data.forEach((item) => {
-      const asal = item.Pengunjung?.Asal_Pengunjung || "Tidak diketahui";
+      const asal = item.Asal_Pengunjung || "Tidak diketahui";
       const tipe = guessInstitutionType(asal);
 
-      if (!institutionMap[asal]) {
-        institutionMap[asal] = {
-          name: asal,
+      if (!institutionMap[tipe]) {
+        institutionMap[tipe] = {
+          name: tipe,
           type: tipe,
           visits: 1,
         };
       } else {
-        institutionMap[asal].visits += 1;
+        institutionMap[tipe].visits += 1;
       }
     });
   } else {
@@ -82,6 +92,7 @@ export default function PengunjungIntitusi({
       <h3 className="text-lg font-semibold text-gray-800 mb-6">
         Asal Pengunjung
       </h3>
+
       {institutions.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
           {institutions.map((visitor, idx) => {

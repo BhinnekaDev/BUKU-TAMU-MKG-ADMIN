@@ -10,13 +10,13 @@ import { useEffect, useState } from "react";
 type FilterType = "today" | "week" | "month";
 
 interface TamuData {
-  Tanggal_Pengisian: string;
+  Waktu_Kunjungan: string;
   Pengunjung?: {
     Asal_Pengunjung?: string;
     [key: string]: unknown;
   };
   Keperluan?: string;
-  [key: string]: unknown; // Masih bisa ditambahkan jika butuh fleksibel
+  [key: string]: unknown;
 }
 
 export default function DashboardPage() {
@@ -37,92 +37,60 @@ export default function DashboardPage() {
     month: [],
   });
 
-  const groupDataForChart = (
-    todayArr: TamuData[],
-    weekArr: TamuData[],
-    monthArr: TamuData[]
-  ) => {
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
+  // --- Fungsi bantu untuk mengelompokkan data ke format grafik ---
+  const groupDataForChart = (data: TamuData[], period: FilterType) => {
+    const weekDays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const map = new Map<string, number>();
 
-    const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - (dayOfWeek - 1));
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
+    data.forEach((item) => {
+      const raw = item.Waktu_Kunjungan;
+      if (!raw) return;
 
-    const formatDate = (date: Date) =>
-      new Intl.DateTimeFormat("id-ID", {
-        day: "2-digit",
-        month: "short",
-      }).format(date); // e.g. "15 Jul"
+      // contoh: "Selasa, 7 Oktober 2025, 11.54"
+      const parts = raw.split(", ");
+      const jamStr = parts?.[2]?.split(".")?.[0] || "";
+      const tanggal = parts?.[1] || "";
 
-    const todayData: Record<string, number> = {};
-    const weekData: Record<string, number> = {};
-    const monthData: Record<string, number> = {};
+      let label = "";
 
-    const pushData = (data: TamuData[]) => {
-      data.forEach((item) => {
-        const raw = item.Tanggal_Pengisian;
-        if (!raw) return;
-
-        const tanggal = new Date(raw);
-        if (isNaN(tanggal.getTime())) return;
-
-        if (tanggal.toISOString().split("T")[0] === todayStr) {
-          const label = formatDate(tanggal);
-          todayData[label] = (todayData[label] || 0) + 1;
-        }
-
-        if (tanggal >= weekStart && tanggal <= weekEnd) {
-          const hari = tanggal.toLocaleDateString("id-ID", {
-            weekday: "short",
-          });
-          weekData[hari] = (weekData[hari] || 0) + 1;
-        }
-
-        if (
-          tanggal.getMonth() === today.getMonth() &&
-          tanggal.getFullYear() === today.getFullYear()
-        ) {
-          const label = tanggal.getDate().toString();
-          monthData[label] = (monthData[label] || 0) + 1;
-        }
-      });
-    };
-
-    pushData(todayArr);
-    pushData(weekArr);
-    pushData(monthArr);
-
-    const daysOrder = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
-
-    const formatObjToArray = (
-      obj: Record<string, number>,
-      order?: string[]
-    ) => {
-      const entries = Object.entries(obj);
-      if (order) {
-        return order
-          .filter((key) => obj[key])
-          .map((key) => ({ hour: key, visitors: obj[key] }));
+      if (period === "today") {
+        // tampilkan berdasarkan jam
+        label = `${jamStr}:00`;
+      } else if (period === "week") {
+        // tampilkan berdasarkan hari
+        label = parts?.[0]?.slice(0, 3) || "";
+      } else if (period === "month") {
+        // tampilkan berdasarkan tanggal
+        label = tanggal.split(" ")[0];
       }
-      return entries
-        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
-        .map(([hour, visitors]) => ({ hour, visitors }));
-    };
 
-    return {
-      today: formatObjToArray(todayData),
-      week: formatObjToArray(weekData, daysOrder),
-      month: formatObjToArray(monthData),
-    };
+      if (label) {
+        map.set(label, (map.get(label) || 0) + 1);
+      }
+    });
+
+    let result: { hour: string; visitors: number }[] = [];
+    if (period === "week") {
+      result = weekDays
+        .filter((d) => map.has(d))
+        .map((d) => ({ hour: d, visitors: map.get(d)! }));
+    } else {
+      result = Array.from(map.entries()).map(([hour, visitors]) => ({
+        hour,
+        visitors,
+      }));
+    }
+
+    return result;
   };
 
   useEffect(() => {
+    let hasFetched = false;
+
     const fetchDashboardData = async () => {
+      if (hasFetched) return;
+      hasFetched = true;
+
       try {
         const token = sessionStorage.getItem("access_token");
         const userID = sessionStorage.getItem("user_id");
@@ -136,40 +104,36 @@ export default function DashboardPage() {
           "https://buku-tamu-mkg-database.vercel.app/api/admin/buku-tamu";
 
         const headers = {
-          "Content-Type": "application/json",
+          accept: "*/*",
           access_token: token,
           user_id: userID,
         };
 
-        const [hariRes, mingguRes, bulanRes, totalRes] = await Promise.all([
-          fetch(`${baseURL}/hari-ini`, { headers }),
-          fetch(`${baseURL}/minggu-ini`, { headers }),
-          fetch(`${baseURL}/bulan-ini`, { headers }),
+        const [todayRes, weekRes, monthRes, totalRes] = await Promise.all([
+          fetch(`${baseURL}?period=today`, { headers }),
+          fetch(`${baseURL}?period=week`, { headers }),
+          fetch(`${baseURL}?period=month`, { headers }),
           fetch(baseURL, { headers }),
         ]);
 
-        const hari = await hariRes.json();
-        const minggu = await mingguRes.json();
-        const bulan = await bulanRes.json();
-        const total = await totalRes.json();
+        const todayJson = await todayRes.json();
+        const weekJson = await weekRes.json();
+        const monthJson = await monthRes.json();
+        const totalJson = await totalRes.json();
 
-        setTodayCount(hari.data?.length ?? 0);
-        setWeekCount(minggu.data?.length ?? 0);
-        setMonthCount(bulan.data?.length ?? 0);
-        setJumlahTamu(total.data?.length ?? 0);
+        setTodayCount(todayJson.count || todayJson.data?.length || 0);
+        setWeekCount(weekJson.count || weekJson.data?.length || 0);
+        setMonthCount(monthJson.count || monthJson.data?.length || 0);
+        setJumlahTamu(totalJson.count || totalJson.data?.length || 0);
 
-        setTodayCount(hari.count || hari.data?.length || 0);
-        setWeekCount(minggu.count || minggu.data?.length || 0);
-        setMonthCount(bulan.count || bulan.data?.length || 0);
-        setJumlahTamu(total.count || total.data?.length || 0);
+        const grouped = {
+          today: groupDataForChart(todayJson.data || [], "today"),
+          week: groupDataForChart(weekJson.data || [], "week"),
+          month: groupDataForChart(monthJson.data || [], "month"),
+        };
 
-        const grouped = groupDataForChart(
-          hari.data || [],
-          minggu.data || [],
-          bulan.data || []
-        );
         setGrafikData(grouped);
-        setJadwaltamu(total.data || []);
+        setJadwaltamu(totalJson.data || []);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       }
@@ -190,6 +154,7 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col bg-[#f6f9fc] overflow-y-auto max-h-screen">
         <HeaderDashboard title="Dashboard" />
 
+        {/* Filter tombol */}
         <div className="flex items-center justify-between px-7 pt-6">
           <div></div>
           <div className="flex gap-2">
@@ -209,6 +174,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Statistik ringkas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 px-6 py-6">
           <StatCard
             title="Tamu Hari Ini"
@@ -232,10 +198,12 @@ export default function DashboardPage() {
           />
         </div>
 
+        {/* Grafik */}
         <div className="px-6 pb-6">
           <GrafikPengunjung filter={filter} data={grafikData[filter] || []} />
         </div>
 
+        {/* Tabel institusi */}
         <div>
           <PengunjungInstitusi data={jadwaltamu} />
         </div>

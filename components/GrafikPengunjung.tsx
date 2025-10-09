@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  LineChart,
+  Area,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Area,
 } from "recharts";
 
 interface GrafikPengunjungProps {
