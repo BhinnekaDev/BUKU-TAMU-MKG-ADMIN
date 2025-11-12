@@ -58,7 +58,6 @@ export default function Login() {
       );
 
       const data = await response.json();
-      console.log("RESPON LOGIN:", data);
 
       if (!response.ok) {
         throw new Error(data.message || "Login gagal");

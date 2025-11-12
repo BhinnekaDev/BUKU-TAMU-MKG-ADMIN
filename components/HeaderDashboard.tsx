@@ -44,8 +44,8 @@ export default function HeaderDashboard({ title }: HeaderDashboardProps) {
           headers: {
             "Content-Type": "application/json",
             Accept: "*/*",
-            user_id: user_id,
-            access_token: access_token,
+            Authorization: `Bearer ${access_token}`, // ✅ ubah ke Bearer token
+            user_id: user_id, // tetap dikirim kalau backend memang butuh
           },
         });
 

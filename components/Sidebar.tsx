@@ -1,23 +1,25 @@
 "use client";
-import IconBMKG from "./IconBMKG";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import {
-  Home,
-  Users,
-  Settings,
-  LogOut,
-  Sun,
-  Thermometer,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
+  Home,
+  LogOut,
+  Settings,
+  Sun,
+  Thermometer,
+  Users,
 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import IconBMKG from "./IconBMKG";
 
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMini, setIsMini] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState<boolean | null>(null);
 
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString("id-ID", {
@@ -46,21 +48,35 @@ export default function Sidebar() {
         })
       );
     }, 1000);
-
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const status = sessionStorage.getItem("isSuperadmin");
+    if (status === "true") setIsSuperadmin(true);
+    else setIsSuperadmin(false);
   }, []);
 
   const navItems = [
     { label: "Dashboard", icon: <Home size={18} />, path: "/dashboard" },
     {
       label: "Kelola Tamu",
-      icon: <Users size={18} />,
+      icon: <BookOpen size={18} />,
       path: "/kelolabukutamu",
     },
+    { label: "Kelola Admin", icon: <Users size={18} />, path: "/kelolaadmin" },
     { label: "Pengaturan", icon: <Settings size={18} />, path: "/pengaturan" },
   ];
 
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.label === "Kelola Admin" && isSuperadmin === false) {
+      return false;
+    }
+    return true;
+  });
+
   const handleLogout = () => {
+    sessionStorage.clear();
     sessionStorage.clear();
     toast.success("Anda berhasil logout");
     router.push("/");
@@ -104,7 +120,7 @@ export default function Sidebar() {
 
       {/* Navigasi */}
       <nav className="mt-4 px-1 space-y-2">
-        {navItems.map(({ label, icon, path }) => {
+        {filteredNavItems.map(({ label, icon, path }) => {
           const isActive = pathname === path;
           return (
             <div key={label} className="relative">

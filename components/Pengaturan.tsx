@@ -175,9 +175,10 @@ export default function PengaturanAdmin() {
         {
           method: "PUT",
           headers: {
-            access_token: access_token,
+            "Content-Type": "application/json",
+            Accept: "*/*",
+            Authorization: `Bearer ${access_token}`,
             user_id: user_id,
-            accept: "*/*",
           },
           body: formData,
         }
@@ -261,10 +262,10 @@ export default function PengaturanAdmin() {
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
+              Accept: "*/*",
+              Authorization: `Bearer ${access_token}`,
               user_id: user_id,
-              access_token: access_token,
             },
           }
         );

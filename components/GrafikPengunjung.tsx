@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  LineChart,
+  Area,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Area,
 } from "recharts";
 
 interface GrafikPengunjungProps {
@@ -22,6 +22,7 @@ export default function GrafikPengunjung({
 }: GrafikPengunjungProps) {
   const labelKey = "hour";
 
+  // Judul di atas grafik
   const getFilterLabel = () => {
     switch (filter) {
       case "today":
@@ -33,19 +34,36 @@ export default function GrafikPengunjung({
     }
   };
 
-  // Data dummy agar grid dan sumbu tetap muncul
+  const getXAxisLabel = () => {
+    switch (filter) {
+      case "today":
+        return "Jam";
+      case "week":
+        return "Hari";
+      case "month":
+        return "Tanggal";
+      default:
+        return "";
+    }
+  };
+
+  const roundedData = data.map((d) => ({
+    ...d,
+    visitors: Math.round(d.visitors),
+  }));
+
   const dummyData = [{ hour: "", visitors: 0 }];
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 w-full h-[300px] flex flex-col items-center justify-center">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4 self-start">
+    <div className="bg-white rounded-xl shadow-md p-6 w-full h-[340px] flex flex-col items-center justify-center">
+      <h3 className="text-lg font-semibold text-gray-700 mb-2 self-start">
         Grafik Pengunjung {getFilterLabel()}
       </h3>
 
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          data={data.length > 0 ? data : dummyData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          data={roundedData.length > 0 ? roundedData : dummyData}
+          margin={{ top: 10, right: 30, left: 0, bottom: 40 }}
         >
           <defs>
             <linearGradient id="colorLine" x1="0" y1="0" x2="0" y2="1">
@@ -55,11 +73,21 @@ export default function GrafikPengunjung({
           </defs>
 
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={labelKey} stroke="#888" />
-          <YAxis />
-
+          <XAxis
+            dataKey={labelKey}
+            stroke="#888"
+            tickFormatter={(value) => {
+              if (filter === "month") return `Tgl ${value}`;
+              if (filter === "week") return `Hari ${value}`;
+              return value;
+            }}
+          />
+          <YAxis allowDecimals={false} />
           <Tooltip
-            formatter={(value: number) => [`${value} pengunjung`, "Jumlah"]}
+            formatter={(value: number) => [
+              `${Math.round(value)} pengunjung`,
+              "Jumlah",
+            ]}
           />
 
           <Area
@@ -79,6 +107,7 @@ export default function GrafikPengunjung({
             activeDot={{ r: 8 }}
           />
 
+          {/* Pesan jika tidak ada data */}
           {data.length === 0 && (
             <text
               x="50%"
@@ -91,6 +120,18 @@ export default function GrafikPengunjung({
               Tidak ada data pengunjung
             </text>
           )}
+
+          {/* label penjelas di bawah grafik */}
+          <text
+            x="50%"
+            y="95%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#555"
+            fontSize={12}
+          >
+            {getXAxisLabel()}
+          </text>
         </LineChart>
       </ResponsiveContainer>
     </div>
