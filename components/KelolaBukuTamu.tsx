@@ -760,7 +760,7 @@ export default function KelolaBukuTamu() {
             <th className="p-2">Tujuan</th>
             <th className="p-2">Waktu Kunjungan</th>
             <th className="p-2">Tanda Tangan</th>
-            <th className="p-2">{!isSuperadmin && "Aksi"}</th>
+            <th className="p-2">Aksi"</th>
           </tr>
         </thead>
         <tbody>
@@ -796,7 +796,6 @@ export default function KelolaBukuTamu() {
                   )}
                 </td>
                 <td className="p-2">
-                  {!isSuperadmin && (
                     <button
                       onClick={() => {
                         setSelectedId(tamu.ID_Buku_Tamu);
@@ -807,7 +806,6 @@ export default function KelolaBukuTamu() {
                     >
                       {sedangMenghapus ? "Menghapus..." : "Hapus"}
                     </button>
-                  )}
                 </td>
               </tr>
             ))
