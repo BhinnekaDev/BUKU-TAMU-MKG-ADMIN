@@ -760,7 +760,7 @@ export default function KelolaBukuTamu() {
             <th className="p-2">Tujuan</th>
             <th className="p-2">Waktu Kunjungan</th>
             <th className="p-2">Tanda Tangan</th>
-            <th className="p-2">Aksi"</th>
+            <th className="p-2">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -796,16 +796,16 @@ export default function KelolaBukuTamu() {
                   )}
                 </td>
                 <td className="p-2">
-                    <button
-                      onClick={() => {
-                        setSelectedId(tamu.ID_Buku_Tamu);
-                        setShowDeleteModal(true);
-                      }}
-                      disabled={sedangMenghapus}
-                      className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      {sedangMenghapus ? "Menghapus..." : "Hapus"}
-                    </button>
+                  <button
+                    onClick={() => {
+                      setSelectedId(tamu.ID_Buku_Tamu);
+                      setShowDeleteModal(true);
+                    }}
+                    disabled={sedangMenghapus}
+                    className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {sedangMenghapus ? "Menghapus..." : "Hapus"}
+                  </button>
                 </td>
               </tr>
             ))
