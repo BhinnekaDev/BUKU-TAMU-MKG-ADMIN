@@ -2,6 +2,7 @@
 
 import Pagination from "@/components/PaginationKelolaDataTamu";
 import { useAmbilDataTamu } from "@/hooks/useAmbilKelolaDataTamu";
+import { useHapusDataTamu } from "@/hooks/useHapusDataTamu";
 import { Buffer } from "buffer";
 import { format, parse } from "date-fns";
 import { id } from "date-fns/locale";
@@ -23,6 +24,8 @@ export default function KelolaBukuTamu() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [startDate, setStartDate] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedId, setSelectedId] = useState("");
 
   interface StasiunOption {
     id: string;
@@ -42,20 +45,39 @@ export default function KelolaBukuTamu() {
         nama: "Stasiun Meteorologi",
       },
     ],
-    []
+    [],
   );
 
   const [isDropdownLocked, setIsDropdownLocked] = useState<boolean>(true);
   const [stasiunList, setStasiunList] = useState<StasiunOption[]>([]);
 
   // Hook dengan filter yang sudah diperbaiki
-  const { daftarTamu, sedangMemuat, pesanKesalahan, isSuperadmin } =
-    useAmbilDataTamu({
-      filterStasiunId: selectedStasiun || null,
-      period: filterLaporan,
-      startDate: startDate,
-      endDate: endDate,
-    });
+  const {
+    daftarTamu,
+    sedangMemuat,
+    pesanKesalahan,
+    isSuperadmin,
+    refetchData,
+  } = useAmbilDataTamu({
+    filterStasiunId: selectedStasiun || null,
+    period: filterLaporan,
+    startDate: startDate,
+    endDate: endDate,
+  });
+
+  const { hapusDataTamu, sedangMenghapus } = useHapusDataTamu();
+
+  const konfirmasiHapus = async () => {
+    try {
+      await hapusDataTamu(selectedId);
+
+      setShowDeleteModal(false);
+
+      await refetchData();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const itemsPerPage = 5;
 
@@ -89,7 +111,7 @@ export default function KelolaBukuTamu() {
       setSelectedStasiun(idStasiunSession);
 
       const stasiunPengguna = stasiunListDefault.find(
-        (s) => s.id === idStasiunSession
+        (s) => s.id === idStasiunSession,
       );
       if (stasiunPengguna) {
         setStasiunList([stasiunPengguna]);
@@ -102,7 +124,7 @@ export default function KelolaBukuTamu() {
 
   const tampilkanData = useCallback(
     (nilai: string | null | undefined) => (nilai?.trim() ? nilai : "-"),
-    []
+    [],
   );
 
   // Ubah timezone secara aman (ISO format tetap disarankan)
@@ -169,7 +191,7 @@ export default function KelolaBukuTamu() {
         return null;
       }
     },
-    [parseCustomTanggal]
+    [parseCustomTanggal],
   );
 
   const formatTanggal = useCallback(
@@ -190,7 +212,7 @@ export default function KelolaBukuTamu() {
         return "-";
       }
     },
-    [convertToJakartaTime]
+    [convertToJakartaTime],
   );
 
   // Fixed filtering logic - hanya untuk client-side filtering
@@ -203,7 +225,7 @@ export default function KelolaBukuTamu() {
       const keyword = searchTerm.toLowerCase();
       hasil = hasil.filter((tamu) => {
         const nama = `${tampilkanData(
-          tamu?.Nama_Depan_Pengunjung
+          tamu?.Nama_Depan_Pengunjung,
         )} ${tampilkanData(tamu?.Nama_Belakang_Pengunjung)}`.toLowerCase();
 
         const tujuan = tampilkanData(tamu?.Tujuan).toLowerCase();
@@ -286,7 +308,7 @@ export default function KelolaBukuTamu() {
       worksheet.addRow({
         no: index + 1,
         nama: `${tampilkanData(tamu?.Nama_Depan_Pengunjung)} ${tampilkanData(
-          tamu?.Nama_Belakang_Pengunjung
+          tamu?.Nama_Belakang_Pengunjung,
         )}`,
         noTelepon: tampilkanData(tamu?.No_Telepon_Pengunjung),
         email: tampilkanData(tamu?.Email_Pengunjung),
@@ -342,7 +364,7 @@ export default function KelolaBukuTamu() {
         } catch (error) {
           console.error(
             `Failed to load signature for row ${index + 1}:`,
-            error
+            error,
           );
         }
       }
@@ -354,7 +376,7 @@ export default function KelolaBukuTamu() {
       new Blob([fileBuffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `Daftar_Tamu?.xlsx`
+      `Daftar_Tamu?.xlsx`,
     );
   };
 
@@ -435,7 +457,7 @@ export default function KelolaBukuTamu() {
           `Periode: ${formattedStart} hingga ${formattedEnd}`,
           148.5,
           judulY + 5,
-          { align: "center" }
+          { align: "center" },
         );
       }
 
@@ -472,7 +494,7 @@ export default function KelolaBukuTamu() {
                   };
                   reader.onerror = reject;
                   reader.readAsDataURL(blob);
-                }
+                },
               );
             } catch (err) {
               console.error(`❌ Failed to load signature [${index}]`, err);
@@ -484,7 +506,7 @@ export default function KelolaBukuTamu() {
           return [
             index + 1,
             `${tampilkanData(tamu?.Nama_Depan_Pengunjung)} ${tampilkanData(
-              tamu?.Nama_Belakang_Pengunjung
+              tamu?.Nama_Belakang_Pengunjung,
             )}`,
             tampilkanData(tamu?.No_Telepon_Pengunjung),
             tampilkanData(tamu?.Email_Pengunjung),
@@ -494,7 +516,7 @@ export default function KelolaBukuTamu() {
             formatTanggal(tamu?.Waktu_Kunjungan),
             "", // <== Tidak pakai __img${index}, cukup kosong
           ];
-        })
+        }),
       );
 
       // Generate Table
@@ -555,7 +577,7 @@ export default function KelolaBukuTamu() {
                 data.cell.x + 2,
                 data.cell.y + 2,
                 26,
-                12
+                12,
               );
             }
           }
@@ -714,6 +736,15 @@ export default function KelolaBukuTamu() {
               </button>
             </div>
           </div>
+          <div className="relative group">
+            <button
+              onClick={refetchData}
+              disabled={sedangMemuat}
+              className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {sedangMemuat ? "Memuat..." : "Refresh Data"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -729,6 +760,7 @@ export default function KelolaBukuTamu() {
             <th className="p-2">Tujuan</th>
             <th className="p-2">Waktu Kunjungan</th>
             <th className="p-2">Tanda Tangan</th>
+            <th className="p-2">{!isSuperadmin && "Aksi"}</th>
           </tr>
         </thead>
         <tbody>
@@ -763,11 +795,25 @@ export default function KelolaBukuTamu() {
                     "-"
                   )}
                 </td>
+                <td className="p-2">
+                  {!isSuperadmin && (
+                    <button
+                      onClick={() => {
+                        setSelectedId(tamu.ID_Buku_Tamu);
+                        setShowDeleteModal(true);
+                      }}
+                      disabled={sedangMenghapus}
+                      className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {sedangMenghapus ? "Menghapus..." : "Hapus"}
+                    </button>
+                  )}
+                </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={9} className="p-8 text-center text-gray-500">
+              <td colSpan={10} className="p-8 text-center text-gray-500">
                 Tidak ada data tamu ditemukan.
               </td>
             </tr>
@@ -782,6 +828,41 @@ export default function KelolaBukuTamu() {
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
       />
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md p-6 bg-white rounded-xl shadow-xl">
+            <h2 className="mb-3 text-lg font-semibold text-gray-800">
+              Konfirmasi Penghapusan
+            </h2>
+
+            <p className="text-sm text-gray-600">
+              Apakah Anda yakin ingin menghapus data buku tamu ini?
+            </p>
+
+            <p className="mt-2 text-sm text-red-600">
+              Data yang telah dihapus tidak dapat dikembalikan.
+            </p>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-gray-700 border rounded-md hover:bg-gray-100"
+              >
+                Batal
+              </button>
+
+              <button
+                onClick={konfirmasiHapus}
+                disabled={sedangMenghapus}
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400"
+              >
+                {sedangMenghapus ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
